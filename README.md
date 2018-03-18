@@ -1,6 +1,7 @@
 # bitstream
 
 [![Build Status](https://travis-ci.org/vteromero/bitstream.svg?branch=master)](https://travis-ci.org/vteromero/bitstream)
+[![Go Report Card](https://goreportcard.com/badge/github.com/vteromero/bitstream)](https://goreportcard.com/report/github.com/vteromero/bitstream)
 
 `bitstream` is a Go library to read and write bit-length values on a stream of bytes. It has been designed and optimized to be fast and this is the main goal of this library.
 
