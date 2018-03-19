@@ -47,7 +47,7 @@ func (r *Reader) Read(n int) (uint64, int, error) {
 // ReadAt reads n bits starting at offset off.
 // The returning values are the same as Read function.
 func (r *Reader) ReadAt(n, off int) (uint64, int, error) {
-	if off < 0 || off > (len(r.b)*8) {
+	if off < 0 || off > (len(r.b)*8-1) {
 		return 0, 0, ErrOffsetOutOfBound
 	}
 	r.i = off / 8

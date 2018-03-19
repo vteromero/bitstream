@@ -83,6 +83,7 @@ func TestReader_ReadAt(t *testing.T) {
 		{-250, 0, 0x0, 0, ErrSizeOutOfBound},
 		{250, 0, 0x0, 0, ErrSizeOutOfBound},
 		{8, -10, 0x0, 0, ErrOffsetOutOfBound},
+		{8, len(data) * 8, 0x0, 0, ErrOffsetOutOfBound},
 		{8, len(data)*8 + 10, 0x0, 0, ErrOffsetOutOfBound},
 	}
 
