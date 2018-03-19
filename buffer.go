@@ -53,7 +53,7 @@ func (buff *bitBuffer) loadFrom(b []byte) int {
 			rem -= 2
 		case rem == 1:
 			buff.bits |= uint64(b[i]) << shift
-			rem -= 1
+			rem--
 		default:
 			panic(ErrUnexpected)
 		}
@@ -90,7 +90,7 @@ func (buff *bitBuffer) writeTo(b []byte) int {
 			rem -= 2
 		case rem == 1:
 			b[i] = byte(v)
-			rem -= 1
+			rem--
 		default:
 			panic(ErrUnexpected)
 		}
@@ -104,8 +104,8 @@ func (buff *bitBuffer) get(n int) (uint64, int) {
 	if n < m {
 		m = n
 	}
-	var mask uint64 = ^uint64(0) >> uint(64-m)
-	var x uint64 = (buff.bits >> uint(buff.off)) & mask
+	mask := ^uint64(0) >> uint(64-m)
+	x := (buff.bits >> uint(buff.off)) & mask
 	buff.off += m
 	return x, m
 }
@@ -115,7 +115,7 @@ func (buff *bitBuffer) set(v uint64, n int) int {
 	if n < m {
 		m = n
 	}
-	var mask uint64 = ^uint64(0) >> uint(64-m)
+	mask := ^uint64(0) >> uint(64-m)
 	buff.bits |= (v & mask) << uint(buff.off)
 	buff.off += m
 	return m
