@@ -68,3 +68,15 @@ func TestWriter_Close(t *testing.T) {
 	w.Close()
 	assert.Equal(t, []byte{0xff, 0x0}, data)
 }
+
+func TestWriter_Offset(t *testing.T) {
+	data := make([]byte, 20)
+	w := NewWriter(data)
+	assert.Equal(t, 0, w.Offset())
+
+	w.Write(0x11223344556677, 60)
+	w.Write(0xffffff, 20)
+	w.Write(0xffff, 10)
+	w.Close()
+	assert.Equal(t, 90, w.Offset())
+}

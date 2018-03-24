@@ -111,9 +111,32 @@ func TestReader_Reset(t *testing.T) {
 	assert.Nil(t, z)
 
 	r.Reset()
-	assert.Equal(t, 64, y)
 
 	x, y, z = r.Read(64)
 	assert.Equal(t, uint64(0x0706050403020100), x)
+	assert.Equal(t, 64, y)
 	assert.Nil(t, z)
+}
+
+func TestReader_Offset(t *testing.T) {
+	data := []byte{
+		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+		0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+	}
+
+	r := NewReader(data)
+	assert.Equal(t, 0, r.Offset())
+
+	r.Read(60)
+	r.Read(50)
+	assert.Equal(t, 110, r.Offset())
+
+	r.Reset()
+	assert.Equal(t, 0, r.Offset())
+
+	r.ReadAt(20, 100)
+	assert.Equal(t, 120, r.Offset())
+
+	r.ReadAt(50, 0)
+	assert.Equal(t, 50, r.Offset())
 }

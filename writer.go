@@ -6,9 +6,10 @@ package bitstream
 
 // A Writer is a structure to write bits on a stream of bytes.
 type Writer struct {
-	b    []byte
-	i    int
-	buff *bitBuffer
+	b    []byte     // byte stream
+	i    int        // byte stream index at which buff writes
+	off  int        // bit-length offset
+	buff *bitBuffer // bit buffer
 }
 
 // NewWriter returns a Writer that can write on the stream of bytes provided.
@@ -16,12 +17,14 @@ func NewWriter(b []byte) *Writer {
 	return &Writer{
 		b:    b,
 		i:    0,
+		off:  0,
 		buff: newBitBuffer(0),
 	}
 }
 
 func (w *Writer) flush() {
 	w.i += w.buff.writeTo(w.b[w.i:])
+	w.off += w.buff.off
 }
 
 // Write appends n bits of the value v on the stream.
@@ -56,4 +59,11 @@ func (w *Writer) Write(v uint64, n int) (int, error) {
 func (w *Writer) Close() {
 	w.flush()
 	w.buff = newBitBuffer(0)
+}
+
+// Offset returns the current writing position.
+// It also indicates the number of bits already written by using Write function
+// exclusively.
+func (w *Writer) Offset() int {
+	return w.off
 }

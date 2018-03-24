@@ -36,24 +36,24 @@ func (buff *bitBuffer) loadFrom(b []byte) int {
 		n = 8
 	}
 
-	rem := n
-	for rem > 0 {
-		i := n - rem
+	left := n
+	for left > 0 {
+		i := n - left
 		shift := uint(i * 8)
 
 		switch {
-		case rem == 8:
+		case left == 8:
 			buff.bits |= binary.LittleEndian.Uint64(b[i:]) << shift
-			rem -= 8
-		case rem >= 4:
+			left -= 8
+		case left >= 4:
 			buff.bits |= uint64(binary.LittleEndian.Uint32(b[i:])) << shift
-			rem -= 4
-		case rem >= 2:
+			left -= 4
+		case left >= 2:
 			buff.bits |= uint64(binary.LittleEndian.Uint16(b[i:])) << shift
-			rem -= 2
-		case rem == 1:
+			left -= 2
+		case left == 1:
 			buff.bits |= uint64(b[i]) << shift
-			rem--
+			left--
 		default:
 			panic(ErrUnexpected)
 		}
@@ -73,24 +73,24 @@ func (buff *bitBuffer) writeTo(b []byte) int {
 		n = len(b)
 	}
 
-	rem := n
-	for rem > 0 {
-		i := n - rem
+	left := n
+	for left > 0 {
+		i := n - left
 		v := buff.bits >> uint(i*8)
 
 		switch {
-		case rem == 8:
+		case left == 8:
 			binary.LittleEndian.PutUint64(b[i:], v)
-			rem -= 8
-		case rem >= 4:
+			left -= 8
+		case left >= 4:
 			binary.LittleEndian.PutUint32(b[i:], uint32(v))
-			rem -= 4
-		case rem >= 2:
+			left -= 4
+		case left >= 2:
 			binary.LittleEndian.PutUint16(b[i:], uint16(v))
-			rem -= 2
-		case rem == 1:
+			left -= 2
+		case left == 1:
 			b[i] = byte(v)
-			rem--
+			left--
 		default:
 			panic(ErrUnexpected)
 		}

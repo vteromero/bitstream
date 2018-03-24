@@ -6,9 +6,9 @@ package bitstream
 
 // A Reader is a structure to read bits from a stream of bytes.
 type Reader struct {
-	b    []byte
-	i    int
-	buff *bitBuffer
+	b    []byte     // byte stream
+	i    int        // index from which bytes are loaded into buff
+	buff *bitBuffer // bit buffer
 }
 
 // NewReader returns a Reader that can read bits from the byte slice provided.
@@ -60,4 +60,11 @@ func (r *Reader) ReadAt(n, off int) (uint64, int, error) {
 func (r *Reader) Reset() {
 	r.i = 0
 	r.buff.reset()
+}
+
+// Offset returns the current reading position.
+// It also indicates the number of bits already read by using Read function
+// exclusively.
+func (r *Reader) Offset() int {
+	return r.i*8 - r.buff.len + r.buff.off
 }
