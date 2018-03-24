@@ -80,3 +80,20 @@ func TestWriter_Offset(t *testing.T) {
 	w.Close()
 	assert.Equal(t, 90, w.Offset())
 }
+
+func TestWriter_Reset(t *testing.T) {
+	data := make([]byte, 2)
+	expected := []byte{0x11, 0x11}
+
+	w := NewWriter(data)
+
+	w.Write(0xffff, 16)
+	w.Close()
+
+	w.Reset()
+
+	w.Write(0x1111, 16)
+	w.Close()
+
+	assert.Equal(t, expected, data)
+}

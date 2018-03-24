@@ -67,3 +67,10 @@ func (w *Writer) Close() {
 func (w *Writer) Offset() int {
 	return w.off
 }
+
+// Reset resets the Writer so that it can be written from the beginning.
+func (w *Writer) Reset() {
+	w.i = 0
+	w.off = 0
+	w.buff.reset()
+}
