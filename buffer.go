@@ -104,8 +104,7 @@ func (buff *bitBuffer) get(n int) (uint64, int) {
 	if n < m {
 		m = n
 	}
-	mask := ^uint64(0) >> uint(64-m)
-	x := (buff.bits >> uint(buff.off)) & mask
+	x := (buff.bits >> uint(buff.off)) & maskTable[m]
 	buff.off += m
 	return x, m
 }
@@ -115,8 +114,7 @@ func (buff *bitBuffer) set(v uint64, n int) int {
 	if n < m {
 		m = n
 	}
-	mask := ^uint64(0) >> uint(64-m)
-	buff.bits |= (v & mask) << uint(buff.off)
+	buff.bits |= (v & maskTable[m]) << uint(buff.off)
 	buff.off += m
 	return m
 }
