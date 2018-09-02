@@ -36,27 +36,26 @@ func (buff *bitBuffer) loadFrom(b []byte) int {
 		n = 8
 	}
 
-	left := n
-	for left > 0 {
-		i := n - left
-		shift := uint(i * 8)
-
-		switch {
-		case left == 8:
-			buff.bits |= binary.LittleEndian.Uint64(b[i:]) << shift
-			left -= 8
-		case left >= 4:
-			buff.bits |= uint64(binary.LittleEndian.Uint32(b[i:])) << shift
-			left -= 4
-		case left >= 2:
-			buff.bits |= uint64(binary.LittleEndian.Uint16(b[i:])) << shift
-			left -= 2
-		case left == 1:
-			buff.bits |= uint64(b[i]) << shift
-			left--
-		default:
-			panic(ErrUnexpected)
-		}
+	switch n {
+	case 8:
+		buff.bits |= binary.LittleEndian.Uint64(b)
+	case 7:
+		buff.bits |= uint64(binary.LittleEndian.Uint32(b)) | (uint64(binary.LittleEndian.Uint16(b[4:])) << 32) | (uint64(b[6]) << 48)
+	case 6:
+		buff.bits |= uint64(binary.LittleEndian.Uint32(b)) | (uint64(binary.LittleEndian.Uint16(b[4:])) << 32)
+	case 5:
+		buff.bits |= uint64(binary.LittleEndian.Uint32(b)) | (uint64(b[4]) << 32)
+	case 4:
+		buff.bits |= uint64(binary.LittleEndian.Uint32(b))
+	case 3:
+		buff.bits |= uint64(binary.LittleEndian.Uint16(b)) | (uint64(b[2]) << 16)
+	case 2:
+		buff.bits |= uint64(binary.LittleEndian.Uint16(b))
+	case 1:
+		buff.bits |= uint64(b[0])
+	case 0:
+	default:
+		panic(ErrUnexpected)
 	}
 
 	buff.len = n * 8
@@ -73,27 +72,31 @@ func (buff *bitBuffer) writeTo(b []byte) int {
 		n = len(b)
 	}
 
-	left := n
-	for left > 0 {
-		i := n - left
-		v := buff.bits >> uint(i*8)
-
-		switch {
-		case left == 8:
-			binary.LittleEndian.PutUint64(b[i:], v)
-			left -= 8
-		case left >= 4:
-			binary.LittleEndian.PutUint32(b[i:], uint32(v))
-			left -= 4
-		case left >= 2:
-			binary.LittleEndian.PutUint16(b[i:], uint16(v))
-			left -= 2
-		case left == 1:
-			b[i] = byte(v)
-			left--
-		default:
-			panic(ErrUnexpected)
-		}
+	switch n {
+	case 8:
+		binary.LittleEndian.PutUint64(b, buff.bits)
+	case 7:
+		binary.LittleEndian.PutUint32(b, uint32(buff.bits))
+		binary.LittleEndian.PutUint16(b[4:], uint16(buff.bits>>32))
+		b[6] = byte(buff.bits >> 48)
+	case 6:
+		binary.LittleEndian.PutUint32(b, uint32(buff.bits))
+		binary.LittleEndian.PutUint16(b[4:], uint16(buff.bits>>32))
+	case 5:
+		binary.LittleEndian.PutUint32(b, uint32(buff.bits))
+		b[4] = byte(buff.bits >> 32)
+	case 4:
+		binary.LittleEndian.PutUint32(b, uint32(buff.bits))
+	case 3:
+		binary.LittleEndian.PutUint16(b, uint16(buff.bits))
+		b[2] = byte(buff.bits >> 16)
+	case 2:
+		binary.LittleEndian.PutUint16(b, uint16(buff.bits))
+	case 1:
+		b[0] = byte(buff.bits)
+	case 0:
+	default:
+		panic(ErrUnexpected)
 	}
 
 	return n
