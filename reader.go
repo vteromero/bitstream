@@ -4,67 +4,89 @@
 
 package bitstream
 
-// A Reader is a structure to read bits from a stream of bytes.
+import (
+	"encoding/binary"
+)
+
+// Reader is a structure to read bits from a stream of bytes.
 type Reader struct {
-	b    []byte     // byte stream
-	i    int        // index from which bytes are loaded into buff
-	buff *bitBuffer // bit buffer
+	b   []byte // byte stream
+	off int    // reading position
 }
 
 // NewReader returns a Reader that can read bits from the byte slice provided.
 func NewReader(b []byte) *Reader {
 	return &Reader{
-		b:    b,
-		i:    0,
-		buff: newBitBuffer(0),
+		b:   b,
+		off: 0,
 	}
+}
+
+func (r *Reader) read64LE() (bits uint64) {
+	i := r.off >> 3
+	n := len(r.b) - i
+	b := r.b[i:]
+
+	switch {
+	case n >= 8:
+		bits = binary.LittleEndian.Uint64(b)
+	case n == 7:
+		bits = uint64(binary.LittleEndian.Uint32(b)) | (uint64(binary.LittleEndian.Uint16(b[4:])) << 32) | (uint64(b[6]) << 48)
+	case n == 6:
+		bits = uint64(binary.LittleEndian.Uint32(b)) | (uint64(binary.LittleEndian.Uint16(b[4:])) << 32)
+	case n == 5:
+		bits = uint64(binary.LittleEndian.Uint32(b)) | (uint64(b[4]) << 32)
+	case n == 4:
+		bits = uint64(binary.LittleEndian.Uint32(b))
+	case n == 3:
+		bits = uint64(binary.LittleEndian.Uint16(b)) | (uint64(b[2]) << 16)
+	case n == 2:
+		bits = uint64(binary.LittleEndian.Uint16(b))
+	case n == 1:
+		bits = uint64(b[0])
+	case n == 0:
+		break
+	default:
+		panic(ErrUnexpected)
+	}
+
+	return bits
 }
 
 // Read reads the next n bits from the stream.
-// It returns 3 values: a 64-bit integer that holds the bits, the actual number
-// of bits read and an error value.
-// The returning number of bits is equal to n if there have been no errors and
-// there are enough bits to read. Otherwise, the value will be less than n.
+// It returns a 64-bit integer which holds the bits, and an error value.
 // The returning error is not nil when something went wrong or when the end of
 // the stream has been reached (EOF error).
-func (r *Reader) Read(n int) (uint64, int, error) {
-	if n < 0 || n > 64 {
-		return 0, 0, ErrSizeOutOfBound
+func (r *Reader) Read(n int) (bits uint64, err error) {
+	if n < 0 || n > 64-7 {
+		return bits, ErrSizeOutOfBound
 	}
-	v, m := r.buff.get(n)
-	if m < n {
-		r.i += r.buff.loadFrom(r.b[r.i:])
-		vv, mm := r.buff.get(n - m)
-		v |= vv << uint(m)
-		m += mm
+	if r.off+n > len(r.b)<<3 {
+		return bits, EOF
 	}
-	if m < n {
-		return v, m, EOF
-	}
-	return v, m, nil
+	bits = (r.read64LE() >> uint(r.off&7)) & maskTable[n]
+	r.off += n
+	return bits, err
 }
 
-// ReadAt reads n bits starting at offset off.
+// ReadAt reads n bits starting at position off.
 // The returning values are the same as Read function.
-func (r *Reader) ReadAt(n, off int) (uint64, int, error) {
-	if off < 0 || off > (len(r.b)*8-1) {
-		return 0, 0, ErrOffsetOutOfBound
+func (r *Reader) ReadAt(n, off int) (uint64, error) {
+	if off < 0 || off > len(r.b)<<3 {
+		return 0, ErrOffsetOutOfBound
 	}
-	r.i = off / 8
-	r.i += r.buff.loadFrom(r.b[r.i:])
-	r.buff.moveTo(off % 8)
+	r.off = off
 	return r.Read(n)
 }
 
 // Reset resets the Reader so that it can be read from the beginning.
 func (r *Reader) Reset() {
-	r.i = 0
-	r.buff.reset()
+	r.off = 0
 }
 
 // Offset returns the current reading position.
 // It also indicates the number of bits already read by using Read function
 // exclusively.
 func (r *Reader) Offset() int {
-	return r.i*8 - r.buff.len + r.buff.off
+	return r.off
 }
