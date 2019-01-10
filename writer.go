@@ -4,61 +4,70 @@
 
 package bitstream
 
-// A Writer is a structure to write bits on a stream of bytes.
+import "encoding/binary"
+
+// Writer is a structure to write bits on a stream of bytes.
 type Writer struct {
-	b    []byte     // byte stream
-	i    int        // byte stream index at which buff writes
-	off  int        // bit-length offset
-	buff *bitBuffer // bit buffer
+	b   []byte // byte stream
+	off int    // writing position
 }
 
 // NewWriter returns a Writer that can write on the stream of bytes provided.
 func NewWriter(b []byte) *Writer {
 	return &Writer{
-		b:    b,
-		i:    0,
-		off:  0,
-		buff: newBitBuffer(0),
+		b:   b,
+		off: 0,
 	}
 }
 
-func (w *Writer) flush() {
-	w.i += w.buff.writeTo(w.b[w.i:])
-	w.off += w.buff.off
+func (w *Writer) write64LE(bits uint64) {
+	i := w.off >> 3
+	n := len(w.b) - i
+	b := w.b[i:]
+
+	switch {
+	case n >= 8:
+		binary.LittleEndian.PutUint64(b, bits)
+	case n == 7:
+		binary.LittleEndian.PutUint32(b, uint32(bits))
+		binary.LittleEndian.PutUint16(b[4:], uint16(bits>>32))
+		b[6] = byte(bits >> 48)
+	case n == 6:
+		binary.LittleEndian.PutUint32(b, uint32(bits))
+		binary.LittleEndian.PutUint16(b[4:], uint16(bits>>32))
+	case n == 5:
+		binary.LittleEndian.PutUint32(b, uint32(bits))
+		b[4] = byte(bits >> 32)
+	case n == 4:
+		binary.LittleEndian.PutUint32(b, uint32(bits))
+	case n == 3:
+		binary.LittleEndian.PutUint16(b, uint16(bits))
+		b[2] = byte(bits >> 16)
+	case n == 2:
+		binary.LittleEndian.PutUint16(b, uint16(bits))
+	case n == 1:
+		b[0] = byte(bits)
+	case n == 0:
+		break
+	default:
+		panic(ErrUnexpected)
+	}
 }
 
-// Write appends n bits of the value v on the stream.
-// It returns the actual number the bits written and an error value indicating
-// if something went wrong.
-// The returning size of bits written is always less or equal to n.
+// Write appends to the byte stream the least-significant n bits of the value v.
+// It returns an error value indicating if something went wrong.
 // When the end of the stream is reached, it returns an error EOF.
-func (w *Writer) Write(v uint64, n int) (int, error) {
-	if n < 0 || n > 64 {
-		return 0, ErrSizeOutOfBound
+func (w *Writer) Write(v uint64, n int) error {
+	if n < 0 || n > 64-7 {
+		return ErrSizeOutOfBound
 	}
-	m := w.buff.set(v, n)
-	if m < n {
-		w.flush()
-		sz := (len(w.b) - w.i) * 8
-		if sz > 64 {
-			sz = 64
-		}
-		w.buff = newBitBuffer(sz)
-		m += w.buff.set(v>>uint(m), n-m)
+	if w.off+n > len(w.b)<<3 {
+		return EOF
 	}
-	if m < n {
-		return m, EOF
-	}
-	return m, nil
-}
-
-// Close ends the writing process.
-// It is very important to always close the Writer once all the writes have
-// been done. The Writer uses a bit buffer and some writes (the last ones)
-// might not have actually been written on the stream of bytes.
-func (w *Writer) Close() {
-	w.flush()
-	w.buff = newBitBuffer(0)
+	bits := uint64(w.b[w.off>>3]) | ((v & maskTable[n]) << uint(w.off&7))
+	w.write64LE(bits)
+	w.off += n
+	return nil
 }
 
 // Offset returns the current writing position.
@@ -70,7 +79,5 @@ func (w *Writer) Offset() int {
 
 // Reset resets the Writer so that it can be written from the beginning.
 func (w *Writer) Reset() {
-	w.i = 0
 	w.off = 0
-	w.buff.reset()
 }

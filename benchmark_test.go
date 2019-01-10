@@ -68,8 +68,8 @@ func BenchmarkWrite(b *testing.B) {
 		{"SmallSizes", 1, 16},
 		{"MediumSizes", 17, 32},
 		{"LargeSizes", 33, 48},
-		{"ExtraLargeSizes", 49, 64},
-		{"AllSize", 1, 64},
+		{"ExtraLargeSizes", 49, 57},
+		{"AllSizes", 1, 57},
 	}
 	n := 10000000
 
@@ -81,7 +81,7 @@ func BenchmarkWrite(b *testing.B) {
 
 		b.Run(bm.name, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {
-				if i == n {
+				if i%n == 0 {
 					w.Reset()
 				}
 				w.Write(values[i%n], sizes[i%n])
