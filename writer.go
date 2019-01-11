@@ -32,7 +32,7 @@ func (w *Writer) Write(v uint64, n int) error {
 	}
 	idx := w.off >> 3
 	shift := w.off & 7
-	bits := uint64(w.b[idx]) | ((v & maskTable[n]) << uint(shift))
+	bits := (uint64(w.b[idx]) & maskTable[shift]) | ((v & maskTable[n]) << uint(shift))
 	write64LE(bits, w.b[idx:])
 	w.off += n
 	return nil

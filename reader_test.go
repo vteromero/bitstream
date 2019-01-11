@@ -15,6 +15,7 @@ func TestReader_NewReader(t *testing.T) {
 	r := NewReader(b)
 	assert.Equal(t, b, r.b)
 	assert.Equal(t, 0, r.off)
+	assert.Equal(t, 16, r.maxOffset)
 }
 
 func TestReader_Read(t *testing.T) {

@@ -15,6 +15,7 @@ func TestWriter_NewWriter(t *testing.T) {
 	w := NewWriter(b)
 	assert.Equal(t, b, w.b)
 	assert.Equal(t, 0, w.off)
+	assert.Equal(t, 16, w.maxOffset)
 }
 
 func TestWriter_Write(t *testing.T) {
@@ -65,12 +66,13 @@ func TestWriter_Offset(t *testing.T) {
 }
 
 func TestWriter_Reset(t *testing.T) {
-	data := make([]byte, 2)
+	data := make([]byte, 4)
 	w := NewWriter(data)
 
-	w.Write(0xffff, 16)
-	assert.Equal(t, 16, w.Offset())
-
+	w.Write(0xffffffff, 32)
 	w.Reset()
-	assert.Equal(t, 0, w.Offset())
+	w.Write(0x01010101, 32)
+
+	assert.Equal(t, 32, w.Offset())
+	assert.Equal(t, []byte{0x01, 0x01, 0x01, 0x01}, data)
 }
