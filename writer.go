@@ -6,15 +6,17 @@ package bitstream
 
 // Writer is a structure to write bits on a stream of bytes.
 type Writer struct {
-	b   []byte // byte stream
-	off int    // writing position
+	b         []byte // byte stream
+	off       int    // writing position
+	maxOffset int    // maximum writing position value
 }
 
 // NewWriter returns a Writer that can write on the stream of bytes provided.
 func NewWriter(b []byte) *Writer {
 	return &Writer{
-		b:   b,
-		off: 0,
+		b:         b,
+		off:       0,
+		maxOffset: len(b) << 3,
 	}
 }
 
@@ -25,12 +27,13 @@ func (w *Writer) Write(v uint64, n int) error {
 	if n < 0 || n > 64-7 {
 		return ErrSizeOutOfBound
 	}
-	if w.off+n > len(w.b)<<3 {
+	if w.off >= w.maxOffset || w.off+n > w.maxOffset {
 		return EOF
 	}
-	i := w.off >> 3
-	bits := uint64(w.b[i]) | ((v & maskTable[n]) << uint(w.off&7))
-	write64LE(bits, w.b[i:])
+	idx := w.off >> 3
+	shift := w.off & 7
+	bits := uint64(w.b[idx]) | ((v & maskTable[n]) << uint(shift))
+	write64LE(bits, w.b[idx:])
 	w.off += n
 	return nil
 }

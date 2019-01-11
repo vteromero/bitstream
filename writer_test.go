@@ -35,6 +35,8 @@ func TestWriter_Write(t *testing.T) {
 		{0x0, 0, nil},
 		{0x0, 0, nil},
 		{0xaabbccdd, 32, nil},
+		{0x0, 0, EOF},
+		{0x0, 0, EOF},
 		{0xffff, 16, EOF},
 		{0x1111, 16, EOF},
 	}

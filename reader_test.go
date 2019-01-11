@@ -43,7 +43,7 @@ func TestReader_Read(t *testing.T) {
 		{6, 0x08, nil},
 		{4, 0x1, nil},
 		{40, 0x1716151413, nil},
-		{0, 0x0, nil},
+		{0, 0x0, EOF},
 		{1, 0x0, EOF},
 		{10, 0x0, EOF},
 	}
@@ -85,7 +85,7 @@ func TestReader_ReadAt(t *testing.T) {
 		{250, 0, 0x0, ErrSizeOutOfBound},
 		{58, 0, 0x0, ErrSizeOutOfBound},
 		{8, -10, 0x0, ErrOffsetOutOfBound},
-		{8, len(data) * 8, 0x0, EOF},
+		{8, len(data) * 8, 0x0, ErrOffsetOutOfBound},
 		{8, len(data)*8 + 10, 0x0, ErrOffsetOutOfBound},
 	}
 

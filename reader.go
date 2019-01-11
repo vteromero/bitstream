@@ -6,15 +6,17 @@ package bitstream
 
 // Reader is a structure to read bits from a stream of bytes.
 type Reader struct {
-	b   []byte // byte stream
-	off int    // reading position
+	b         []byte // byte stream
+	off       int    // reading position
+	maxOffset int    // maximum reading position value
 }
 
 // NewReader returns a Reader that can read bits from the byte slice provided.
 func NewReader(b []byte) *Reader {
 	return &Reader{
-		b:   b,
-		off: 0,
+		b:         b,
+		off:       0,
+		maxOffset: len(b) << 3,
 	}
 }
 
@@ -26,10 +28,12 @@ func (r *Reader) Read(n int) (bits uint64, err error) {
 	if n < 0 || n > 64-7 {
 		return bits, ErrSizeOutOfBound
 	}
-	if r.off+n > len(r.b)<<3 {
+	if r.off >= r.maxOffset || r.off+n > r.maxOffset {
 		return bits, EOF
 	}
-	bits = (read64LE(r.b[r.off>>3:]) >> uint(r.off&7)) & maskTable[n]
+	idx := r.off >> 3
+	shift := r.off & 7
+	bits = (read64LE(r.b[idx:]) >> uint(shift)) & maskTable[n]
 	r.off += n
 	return bits, err
 }
@@ -37,7 +41,7 @@ func (r *Reader) Read(n int) (bits uint64, err error) {
 // ReadAt reads n bits starting at position off.
 // The returning values are the same as Read function.
 func (r *Reader) ReadAt(n, off int) (uint64, error) {
-	if off < 0 || off > len(r.b)<<3 {
+	if off < 0 || off >= r.maxOffset {
 		return 0, ErrOffsetOutOfBound
 	}
 	r.off = off
