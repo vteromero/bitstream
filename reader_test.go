@@ -13,6 +13,7 @@ import (
 func TestReader_NewReader(t *testing.T) {
 	b := []byte{0x11, 0x22}
 	r := NewReader(b)
+
 	assert.Equal(t, b, r.b)
 	assert.Equal(t, 0, r.off)
 	assert.Equal(t, 16, r.maxOffset)
@@ -51,11 +52,11 @@ func TestReader_Read(t *testing.T) {
 
 	r := NewReader(data)
 
-	for i := 0; i < len(params); i++ {
-		x, y := r.Read(params[i].n)
+	for _, testCase := range params {
+		x, y := r.Read(testCase.n)
 
-		assert.Equal(t, params[i].expectedBits, x)
-		assert.Equal(t, params[i].expectedErr, y)
+		assert.Equal(t, testCase.expectedBits, x)
+		assert.Equal(t, testCase.expectedErr, y)
 	}
 }
 
@@ -92,11 +93,11 @@ func TestReader_ReadAt(t *testing.T) {
 
 	r := NewReader(data)
 
-	for i := 0; i < len(params); i++ {
-		x, y := r.ReadAt(params[i].n, params[i].off)
+	for _, testCase := range params {
+		x, y := r.ReadAt(testCase.n, testCase.off)
 
-		assert.Equal(t, params[i].expectedBits, x)
-		assert.Equal(t, params[i].expectedErr, y)
+		assert.Equal(t, testCase.expectedBits, x)
+		assert.Equal(t, testCase.expectedErr, y)
 	}
 }
 

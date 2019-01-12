@@ -13,6 +13,7 @@ import (
 func TestWriter_NewWriter(t *testing.T) {
 	b := []byte{0x0, 0x0}
 	w := NewWriter(b)
+
 	assert.Equal(t, b, w.b)
 	assert.Equal(t, 0, w.off)
 	assert.Equal(t, 16, w.maxOffset)
@@ -46,9 +47,9 @@ func TestWriter_Write(t *testing.T) {
 	data := make([]byte, len(expected))
 	w := NewWriter(data)
 
-	for i := 0; i < len(params); i++ {
-		err := w.Write(params[i].v, params[i].n)
-		assert.Equal(t, params[i].expectedErr, err)
+	for _, testCase := range params {
+		err := w.Write(testCase.v, testCase.n)
+		assert.Equal(t, testCase.expectedErr, err)
 	}
 
 	assert.Equal(t, expected, data)
@@ -57,11 +58,13 @@ func TestWriter_Write(t *testing.T) {
 func TestWriter_Offset(t *testing.T) {
 	data := make([]byte, 20)
 	w := NewWriter(data)
+
 	assert.Equal(t, 0, w.Offset())
 
 	w.Write(0x11223344556677, 50)
 	w.Write(0xffffff, 20)
 	w.Write(0xffff, 10)
+
 	assert.Equal(t, 80, w.Offset())
 }
 
