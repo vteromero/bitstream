@@ -100,7 +100,7 @@ $ cd $GOPATH/src/github.com/vteromero/bitstream
 $ go test -run=^$ -bench=.
 ```
 
-As a reference, here is the outcome on a laptop Ubuntu Desktop 18.11 with a Core i7-6700HQ CPU @ 2.60GHz x 8
+As a reference, here is the outcome on a laptop Ubuntu Desktop 18.10 with a Core i7-6700HQ CPU @ 2.60GHz x 8
 
 ```
 BenchmarkRead/SmallSizes-8         	100000000	        16.3 ns/op
